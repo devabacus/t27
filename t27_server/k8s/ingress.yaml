@@ -1,0 +1,48 @@
+
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: t27-server-ingress
+  annotations:    
+    cert-manager.io/cluster-issuer: "letsencrypt-prod" 
+spec:
+  ingressClassName: traefik
+  tls:
+  - hosts:
+    - api27.my-points.ru
+    - web27.my-points.ru
+    - insights27.my-points.ru
+    secretName: serverpod-tls-t27
+  rules:
+  - host: "api27.my-points.ru"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: t27-server-service
+            port:
+              name: api
+  - host: "web27.my-points.ru"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: t27-server-service
+            port:
+              name: web
+  - host: "insights27.my-points.ru"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: t27-server-service
+            port:
+              name: insights
+    

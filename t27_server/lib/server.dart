@@ -54,8 +54,8 @@ void run(List<String> args) async {
 
   if (!isMaintenance) {
     // Setup a default page at the web root.
-    pod.webServer.addRoute(RouteRoot(), '/');
-    pod.webServer.addRoute(RouteRoot(), '/index.html');
+    pod.webServer.addRoute(RootRoute(), '/');
+    pod.webServer.addRoute(RootRoute(), '/index.html');
     // Serve all files in the /static directory.
     pod.webServer.addRoute(
       StaticRoute.directory(Directory('static')),
