@@ -1,4 +1,3 @@
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,7 +5,7 @@ metadata:
   labels:
     app: t27-server
 spec:
-  replicas: 1 
+  replicas: 1
   selector:
     matchLabels:
       app: t27-server
@@ -16,54 +15,68 @@ spec:
         app: t27-server
     spec:
       imagePullSecrets:
-      - name: timeweb-registry-secret
+        - name: timeweb-registry-secret
 
       containers:
-      - name: t27-server
-        
-        image: ...registry.twcstorage.ru/t27-server:latest
-        command: ["/usr/local/bin/server", "--mode", "production", "--role", "monolith"]
+        - name: t27-server
 
-        imagePullPolicy: Always 
+          image: ...registry.twcstorage.ru/t27-server:latest
+          command:
+            [
+              "/usr/local/bin/server",
+              "--mode",
+              "production",
+              "--role",
+              "monolith",
+            ]
 
-        ports:
-        - containerPort: 8080 
-        - containerPort: 8081 
-        - containerPort: 8082 
+          imagePullPolicy: Always
 
-        envFrom:
-        - configMapRef:
-            name: serverpod-config-t27 
-        
-        env:
-        - name: SERVERPOD_DATABASE_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: serverpod-secrets-t27 
-              key: database-password 
-        - name: SERVERPOD_REDIS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: serverpod-secrets-t27
-              key: redis-password
-        - name: SERVERPOD_SERVICE_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: serverpod-secrets-t27
-              key: service-secret
+          ports:
+            - containerPort: 8080
+            - containerPort: 8081
+            - containerPort: 8082
 
-        readinessProbe:
-          httpGet:
-            path: / 
-            port: 8082
-          initialDelaySeconds: 20 
-          periodSeconds: 15     
+          envFrom:
+            - configMapRef:
+                name: serverpod-config-t27
 
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 8082
-          initialDelaySeconds: 60 
-          periodSeconds: 30
+          env:
+            - name: SERVERPOD_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: serverpod-secrets-t27
+                  key: database-password
+            - name: SERVERPOD_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: serverpod-secrets-t27
+                  key: redis-password
+            - name: SERVERPOD_SERVICE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: serverpod-secrets-t27
+                  key: service-secret
 
-    
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          readinessProbe:
+            tcpSocket:
+              port: 8082 # WebServer (теперь включен)
+            initialDelaySeconds: 45 # Увеличено с 20 для учета времени инициализации БД
+            periodSeconds: 10 # Проверяем каждые 10 секунд
+            failureThreshold: 3 # 3 неудачных попытки = под не ready
+
+          livenessProbe:
+            tcpSocket:
+              port: 8082 # WebServer (теперь включен)
+            initialDelaySeconds: 90 # Увеличено с 60
+            periodSeconds: 20 # Проверяем каждые 20 секунд
+            failureThreshold: 3 # 3 неудачных попытки = перезапуск пода
+
